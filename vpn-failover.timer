@@ -1,0 +1,8 @@
+[Unit]
+Description=VPN backhaul failover every 15s after previous run
+[Timer]
+OnBootSec=45s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+[Install]
+WantedBy=timers.target

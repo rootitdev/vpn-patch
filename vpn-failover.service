@@ -1,0 +1,6 @@
+[Unit]
+Description=VPN backhaul failover controller
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /root/vpn-infra/scripts/vpn_failover.py

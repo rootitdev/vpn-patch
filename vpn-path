@@ -1,0 +1,3 @@
+#!/bin/bash
+# Exit entrypoint. Live path is panel core + Iran sync agent, not systemd json on Iran.
+exec /usr/bin/python3 /root/vpn-infra/scripts/vpn-path-core.py "$@"
