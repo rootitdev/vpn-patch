@@ -1,0 +1,16 @@
+[Unit]
+Description=vpn-path backhaul selector web UI
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/path-web/app.py
+Restart=always
+RestartSec=2
+User=root
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+[Install]
+WantedBy=multi-user.target

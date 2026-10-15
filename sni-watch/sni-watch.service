@@ -1,0 +1,14 @@
+[Unit]
+Description=Selected-client adult SNI watch
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/sni-watch/app.py
+Restart=always
+RestartSec=2
+User=root
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

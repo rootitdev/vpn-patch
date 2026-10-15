@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>فروشگاه روتیت - فروش لوازم جانبی به صورت عمده</title>
+<meta name="description" content="فروشگاه روتیت - فروش لوازم جانبی به صورت عمده">
+<style>
+@font-face{
+  font-family:'IRANYekanX';
+  src:url('static/IRANYekanX-Medium.woff2') format('woff2');
+  font-weight:500;font-style:normal;font-display:swap;
+}
+:root{
+  --bg:#f4f6f8;--card:#fff;--line:#e5e7eb;--txt:#1f2937;--mut:#6b7280;
+  --acc:#2563eb;--ok:#15803d;--hi:#b91c1c;--soft:#eff6ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IRANYekanX',Tahoma,Verdana,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+.top{background:#111827;color:#f9fafb;padding:12px 16px;font-size:13px}
+.top b{font-weight:500}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 40px}
+.hero{margin:14px 0 18px}
+.hero h1{margin:0 0 6px;font-size:22px;font-weight:500}
+.hero p{margin:0;color:var(--mut);font-size:13px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(4,1fr)}}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center}
+.prod .ic{width:42px;height:42px;margin:0 auto 8px;border-radius:10px;background:var(--soft);display:grid;place-items:center;font-size:18px;color:var(--acc)}
+.prod b{display:block;font-size:13px;font-weight:500;margin-bottom:2px}
+.prod span{font-size:11px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px}
+input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--txt);font-size:15px;font-family:inherit;margin-bottom:10px}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 16px;font-size:15px;cursor:pointer;width:100%;font-family:inherit}
+.btn:disabled{opacity:.5;cursor:default}
+.ghost{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 12px;cursor:pointer;width:100%;margin-top:8px;font-family:inherit}
+.ghost:hover{background:#f9fafb}
+.plan{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin:8px 0;cursor:pointer;background:#fafafa}
+.plan:hover{border-color:var(--acc);background:var(--soft)}
+.amt{font-size:26px;font-weight:500;margin:8px 0}
+.mut{color:var(--mut);font-size:12px}
+.ok{color:var(--ok)}.hi{color:var(--hi)}
+.flash{padding:10px;border-radius:10px;margin-bottom:12px;display:none}
+.flash.on{display:block}.flash.ok{background:#dcfce7;color:#14532d}.flash.err{background:#fee2e2;color:#7f1d1d}
+.sub{color:var(--mut);font-size:13px;margin:0 0 14px;line-height:1.7}
+.contact{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--mut);line-height:1.8}
+.contact a{color:var(--acc);text-decoration:none}
+.contact.hidden{display:none}
+.foot{margin-top:20px;text-align:center;font-size:11px;color:#9ca3af}
+/* pay receipt — light only */
+.pay-box{display:grid;gap:12px}
+.pay-amt-box{background:var(--soft);border:1px solid #dbeafe;border-radius:12px;padding:14px 14px 12px;text-align:center}
+.pay-amt-box .lbl{font-size:12px;color:var(--mut);margin-bottom:4px}
+.pay-amt-box .amt{margin:0;color:#1e3a8a;letter-spacing:.3px;font-size:28px}
+.pay-amt-box .rial{margin-top:4px;font-size:12px;color:#64748b}
+.pay-card-box{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fafafa}
+.pay-card-box .lbl{font-size:12px;color:var(--mut);margin-bottom:6px}
+.pay-card-box .num{font-size:18px;font-weight:500;letter-spacing:1px;direction:ltr;unicode-bidi:plaintext;text-align:center}
+.pay-card-box .name{margin-top:6px;font-size:12px;color:var(--mut);text-align:center}
+.pay-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mut);padding:0 2px}
+.pay-meta .timer{color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:999px;padding:3px 10px}
+.pay-actions{display:grid;gap:8px;margin-top:4px}
+.pay-actions .btn-main{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;font-family:inherit}
+.pay-actions .btn-main:hover{filter:brightness(1.05)}
+.pay-actions .btn-sec{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit}
+.pay-actions .btn-sec:hover{background:#f9fafb;border-color:#cbd5e1}
+.pay-actions .btn-mute{background:transparent;border:0;color:var(--mut);padding:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.pay-actions .btn-mute:hover{color:var(--txt)}
+</style>
+</head>
+<body>
+<div class="top" id="top-bar">فروشگاه روتیت - فروش لوازم جانبی به صورت عمده</div>
+<div class="wrap">
+  <div class="hero" id="shop-hero">
+    <h1>همکاران گرامی جهت خرید لوازم جانبی نام کاربری و رمز عبور را وارد کنید</h1>
+    <p>ماوس، کیبورد، هدست و تجهیزات جانبی — فروش عمده</p>
+  </div>
+
+  <div class="grid" id="catalog">
+    <div class="prod"><div class="ic">M</div><b>ماوس بی‌سیم</b><span>از ۲۹۰ هزار</span></div>
+    <div class="prod"><div class="ic">K</div><b>کیبورد مکانیکال</b><span>از ۱٫۲ میلیون</span></div>
+    <div class="prod"><div class="ic">H</div><b>هدست گیمینگ</b><span>از ۷۸۰ هزار</span></div>
+    <div class="prod"><div class="ic">U</div><b>هاب USB-C</b><span>از ۴۵۰ هزار</span></div>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <div class="card" id="step-search">
+    <h2 style="margin:0 0 8px;font-size:16px;font-weight:500">ورود همکاران</h2>
+    <p class="sub" id="slogan">همکاران گرامی جهت خرید لوازم جانبی نام کاربری و رمز عبور را وارد کنید</p>
+    <label>نام کاربری</label>
+    <input id="uname" autocomplete="username" placeholder="نام کاربری">
+    <label>رمز عبور</label>
+    <input id="upass" type="password" autocomplete="current-password" placeholder="رمز عبور">
+    <button class="btn" id="btn-search" type="button">ورود</button>
+  </div>
+
+  <div id="step-user" hidden>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
+        <div>
+          <b id="u-name">—</b>
+          <div class="mut" id="u-meta"></div>
+        </div>
+        <button class="ghost" id="btn-back" type="button" style="width:auto;margin:0;padding:8px 10px">خروج</button>
+      </div>
+      <div class="mut" style="margin-top:10px" id="u-stats"></div>
+    </div>
+    <div class="card" id="plans-box">
+      <h2 style="margin:0 0 8px;font-size:16px;font-weight:500">بسته‌های ویژه حساب</h2>
+      <div id="plans"></div>
+    </div>
+  </div>
+
+  <div id="step-pay" hidden>
+    <div class="card pay-box">
+      <div class="pay-amt-box">
+        <div class="lbl">مبلغ قابل پرداخت</div>
+        <div class="amt" id="pay-amt">—</div>
+        <div class="rial" id="pay-rial"></div>
+      </div>
+      <div class="pay-card-box">
+        <div class="lbl">واریز به کارت</div>
+        <div class="num" id="pay-card">—</div>
+        <div class="name" id="pay-card-name"></div>
+      </div>
+      <div class="pay-meta">
+        <span id="pay-plan"></span>
+        <span class="timer" id="pay-timer"></span>
+      </div>
+      <div class="pay-actions">
+        <button class="btn-main" id="btn-copy-amt" type="button">کپی مبلغ</button>
+        <button class="btn-sec" id="btn-refresh" type="button">بررسی پرداخت</button>
+        <button class="btn-mute" id="btn-cancel-flow" type="button">بازگشت</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="contact hidden" id="contact"></div>
+  <div class="foot">© فروشگاه لوازم جانبی — همه حقوق محفوظ است</div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+let state = {user:null, order:null, timer:null};
+function flash(msg, kind){
+  const el=$('flash');
+  if (!msg){ el.className='flash'; el.textContent=''; return; }
+  el.className='flash on '+(kind||'ok');
+  el.textContent=msg;
+}
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function applyBrand(u){
+  if (u && u.business_name) {
+    $('top-bar').textContent = u.business_name + ' - فروش لوازم جانبی به صورت عمده';
+  }
+  if (u && u.slogan) $('slogan').textContent = u.slogan;
+  const bits = [];
+  if (u && u.telegram_channel){
+    const ch = u.telegram_channel;
+    const href = ch.startsWith('http') ? ch : ('https://t.me/' + ch.replace(/^@/,''));
+    bits.push('کانال: <a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(ch)+'</a>');
+  }
+  if (u && u.support_phone) bits.push('پشتیبانی: <a href="tel:'+esc(u.support_phone)+'">'+esc(u.support_phone)+'</a>');
+  if (u && u.support_telegram){
+    const tg = u.support_telegram;
+    const href = tg.startsWith('http') ? tg : ('https://t.me/' + tg.replace(/^@/,''));
+    bits.push('تلگرام: <a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(tg)+'</a>');
+  }
+  const box = $('contact');
+  if (bits.length){ box.innerHTML = bits.join('<br>'); box.classList.remove('hidden'); }
+  else { box.innerHTML=''; box.classList.add('hidden'); }
+}
+async function api(path, body){
+  const opt = body !== undefined ? {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body)} : {};
+  const r = await fetch(path, opt);
+  const data = await r.json().catch(() => ({error:'جواب نامعتبر'}));
+  if (!r.ok) throw new Error(data.error || ('خطا '+r.status));
+  return data;
+}
+function show(step){
+  const logged = step === 'user' || step === 'pay';
+  $('shop-hero').hidden = logged;
+  $('catalog').hidden = logged;
+  $('step-search').hidden = step !== 'search';
+  $('step-user').hidden = step !== 'user' && step !== 'pay';
+  $('step-pay').hidden = step !== 'pay';
+  if (step !== 'user') $('plans-box').hidden = step === 'pay';
+  else $('plans-box').hidden = false;
+}
+function renderUser(u){
+  state.user = u;
+  applyBrand(u);
+  $('u-name').textContent = u.username;
+  $('u-meta').textContent = 'وضعیت حساب: ' + (u.status||'—');
+  $('u-stats').innerHTML = 'سقف: <b>'+esc(u.limit_h)+'</b> | مصرف: <b>'+esc(u.used_h)+'</b>';
+  const box = $('plans');
+  if (!u.plans || !u.plans.length){
+    box.innerHTML = '<div class="mut">بسته‌ای تعریف نشده است.</div>';
+  } else {
+    box.innerHTML = u.plans.map(p =>
+      `<div class="plan" data-id="${p.id}"><div><b>${esc(p.title)}</b><div class="mut">${esc(p.volume_h|| (p.gib+' گیگ'))} | ${p.days} روز | ${esc(p.users_h || ((p.user_count||1)+' کاربره'))}</div></div><div><b>${esc(p.price_h)}</b></div></div>`
+    ).join('');
+    box.querySelectorAll('.plan').forEach(el => {
+      el.onclick = () => createOrder(Number(el.dataset.id));
+    });
+  }
+  if (u.pending && u.pending.status === 'pending'){
+    showPay(u.pending, u);
+  } else {
+    show('user');
+  }
+}
+function showPay(order, user){
+  state.order = order;
+  $('pay-amt').textContent = order.pay_h;
+  $('pay-rial').textContent = order.pay_rial_h || '';
+  $('pay-card').textContent = (user && user.card_number) ? user.card_number : (order.card_number || '—');
+  $('pay-card-name').textContent = (user && user.card_name) || order.card_name || '';
+  const vol = (Number(order.gib)||0) <= 0 ? 'نامحدود' : (order.gib + ' گیگ');
+  const usersN = Number(order.user_count || (state.user && state.user.plans && state.user.plans.find(x => x.id===order.plan_id) && state.user.plans.find(x => x.id===order.plan_id).user_count) || 1);
+  const usersTxt = (usersN > 0 ? (usersN + ' کاربره') : '');
+  $('pay-plan').textContent = vol + ' / ' + order.days + ' روز' + (usersTxt ? (' | ' + usersTxt) : '') + ' | سفارش #' + order.id;
+  tickTimer();
+  if (state.timer) clearInterval(state.timer);
+  state.timer = setInterval(tickTimer, 1000);
+  show('pay');
+  $('plans-box').hidden = true;
+}
+function tickTimer(){
+  if (!state.order) return;
+  const left = Math.max(0, Math.floor(state.order.expires_ts - Date.now()/1000));
+  state.order.expires_in = left;
+  const m = Math.floor(left/60), s = left%60;
+  $('pay-timer').textContent = left ? ('مهلت: ' + m + ':' + String(s).padStart(2,'0')) : 'مهلت تمام شد';
+  if (!left && state.timer){ clearInterval(state.timer); state.timer=null; }
+}
+async function search(){
+  flash('');
+  const uname = $('uname').value.trim();
+  if (!uname){ flash('نام کاربری را وارد کنید.','err'); return; }
+  if (!$('upass').value){ flash('رمز عبور را وارد کنید.','err'); return; }
+  $('btn-search').disabled = true;
+  try {
+    const d = await api('api/lookup?username=' + encodeURIComponent(uname));
+    renderUser(d);
+  } catch(e){ flash(e.message,'err'); }
+  finally { $('btn-search').disabled = false; }
+}
+async function createOrder(planId){
+  flash('');
+  try {
+    const d = await api('api/order', {username: state.user.username, plan_id: planId});
+    const ord = d.order;
+    ord.card_number = ord.card_number || state.user.card_number;
+    ord.card_name = ord.card_name || state.user.card_name;
+    state.user.card_number = ord.card_number;
+    state.user.card_name = ord.card_name;
+    showPay(ord, state.user);
+    flash(d.message || 'سفارش ثبت شد.','ok');
+  } catch(e){ flash(e.message,'err'); }
+}
+async function refreshOrder(){
+  if (!state.order) return;
+  try {
+    const d = await api('api/order?id=' + state.order.id);
+    const o = d.order;
+    if (o.status === 'paid'){
+      flash('پرداخت تأیید شد.','ok');
+      if (state.timer){ clearInterval(state.timer); state.timer=null; }
+      $('pay-timer').innerHTML = '<span class="ok">تأیید شد</span>';
+      state.order = o;
+      return;
+    }
+    if (o.status !== 'pending'){
+      flash('سفارش فعال نیست.','err');
+      return;
+    }
+    state.order = o;
+    tickTimer();
+    flash('هنوز پرداختی دیده نشده.','ok');
+  } catch(e){ flash(e.message,'err'); }
+}
+$('btn-search').onclick = search;
+$('uname').addEventListener('keydown', e => { if (e.key==='Enter') $('upass').focus(); });
+$('upass').addEventListener('keydown', e => { if (e.key==='Enter') search(); });
+$('btn-back').onclick = () => { show('search'); flash(''); };
+$('btn-cancel-flow').onclick = () => {
+  if (state.user){ show('user'); $('plans-box').hidden=false; flash(''); }
+  else show('search');
+};
+$('btn-refresh').onclick = refreshOrder;
+$('btn-copy-amt').onclick = async () => {
+  if (!state.order) return;
+  try {
+    await navigator.clipboard.writeText(String(state.order.pay_amount));
+    flash('مبلغ کپی شد.','ok');
+  } catch(e){ flash('کپی نشد.','err'); }
+};
+const q = new URLSearchParams(location.search);
+if (q.get('u')){ $('uname').value = q.get('u'); }
+</script>
+</body>
+</html>

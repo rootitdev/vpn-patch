@@ -1,0 +1,242 @@
+#!/usr/bin/python3
+"""CLI for sni-watch on Iran (local DB) or Exit (via SSH).
+
+  sni-watch stats [--days N] [--hours N] [--scan-log]
+  sni-watch list
+  sni-watch status
+  sni-watch domains [host ...]
+"""
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+LIB_DIR = Path("/usr/local/lib/sni-watch")
+for p in (LIB_DIR, HERE):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+
+from sni_watch_lib import (  # noqa: E402
+    aggregate_db_hits,
+    domain_check,
+    load_cfg,
+    load_domains,
+    load_watch_clients,
+    retention_sec,
+    scan_log_hits,
+)
+
+DEFAULT_IRAN = os.environ.get("SNI_WATCH_IRAN", "root@193.228.90.107")
+LOCAL_DB = Path("/var/lib/sni-watch/watch.db")
+
+
+def fail(msg: str, code: int = 1) -> None:
+    print(msg, file=sys.stderr)
+    raise SystemExit(code)
+
+
+def usage() -> None:
+    fail(
+        "usage:\n"
+        "  sni-watch stats [--days N | --hours N] [--scan-log]\n"
+        "  sni-watch list\n"
+        "  sni-watch status\n"
+        "  sni-watch domains [host ...]\n"
+        "\n"
+        "روی Exit بدون DB محلی، خودکار از طریق SSH به ایران اجرا می‌شود.",
+        2,
+    )
+
+
+def maybe_remote(argv: list[str]) -> None:
+    if LOCAL_DB.exists():
+        return
+    if os.environ.get("SNI_WATCH_LOCAL") == "1":
+        fail(f"DB محلی پیدا نشد: {LOCAL_DB}")
+    target = DEFAULT_IRAN
+    cmd = ["ssh", "-o", "BatchMode=yes", target, "sni-watch", *argv]
+    p = subprocess.run(cmd)
+    raise SystemExit(p.returncode)
+
+
+def parse_window(args: list[str]) -> tuple[float, str, list[str], bool]:
+    days = None
+    hours = None
+    scan_log = False
+    rest: list[str] = []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == "--scan-log":
+            scan_log = True
+            i += 1
+            continue
+        if a == "--days" and i + 1 < len(args):
+            days = int(args[i + 1])
+            i += 2
+            continue
+        if a == "--hours" and i + 1 < len(args):
+            hours = int(args[i + 1])
+            i += 2
+            continue
+        rest.append(a)
+        i += 1
+    if rest:
+        usage()
+    if hours is not None and days is not None:
+        fail("فقط یکی از --days یا --hours را بزنید.")
+    if hours is not None:
+        if hours < 1:
+            fail("--hours باید ≥ 1 باشد.")
+        since = time.time() - hours * 3600
+        label = f"{hours} ساعت اخیر"
+    elif days is not None:
+        if days < 1:
+            fail("--days باید ≥ 1 باشد.")
+        since = time.time() - days * 86400
+        label = f"{days} روز اخیر"
+    else:
+        cfg = load_cfg()
+        since = time.time() - retention_sec(cfg)
+        label = f"{cfg.get('RETENTION_DAYS', '2')} روز اخیر (retention)"
+    return since, label, rest, scan_log
+
+
+def cmd_stats(args: list[str]) -> None:
+    since, label, _, scan_log = parse_window(args)
+    cfg = load_cfg()
+    source = "scan-log" if scan_log else "database"
+
+    if scan_log:
+        stats, top_domains, lines = scan_log_hits(cfg, since)
+        print(f"منبع: {source}   بازه: {label}")
+        print(f"لاگ‌های خوانده‌شده: {lines:,}")
+    else:
+        stats, top_domains = aggregate_db_hits(cfg, since)
+        print(f"منبع: {source}   بازه: {label}")
+        print(f"DB: {cfg.get('DB_PATH')}")
+
+    print()
+    print(f"{'id':<6} {'label':<22} {'username':<16} {'hits':>8}  top domains")
+    print("-" * 78)
+    total = 0
+    active = 0
+    for st in stats:
+        c = st.client
+        uid = c.primary_id
+        if st.hits:
+            active += 1
+            total += st.hits
+        tops = ", ".join(f"{d}({n})" for d, n in sorted(st.domains.items(), key=lambda x: -x[1])[:3])
+        print(f"{uid:<6} {c.label:<22} {c.email:<16} {st.hits:>8}  {tops or '—'}")
+    print("-" * 78)
+    print(f"جمع hits: {total}   کاربران فعال: {active}/{len(stats)}")
+
+    if top_domains:
+        print()
+        print("دامنه‌های برتر:")
+        for dom, n in top_domains[:15]:
+            print(f"  {dom:<40} {n:>6}")
+    elif not scan_log:
+        print()
+        print("در DB hit نیست. برای اسکن مستقیم لاگ:")
+        print("  sni-watch stats --scan-log --hours 24")
+
+
+def cmd_list() -> None:
+    cfg = load_cfg()
+    clients = load_watch_clients(cfg)
+    if not clients:
+        print("watchlist خالی است.")
+        return
+    print(f"{'id':<6} {'label':<22} {'email':<16} {'enabled':<8} aliases")
+    for c in clients:
+        uid = c.primary_id
+        aliases = ",".join(sorted(x for x in c.ids if x not in {c.email, c.label.lower(), uid})[:4])
+        print(f"{uid:<6} {c.label:<22} {c.email:<16} {'yes' if c.enabled else 'no':<8} {aliases or '—'}")
+
+
+def cmd_status() -> None:
+    cfg = load_cfg()
+    db = Path(cfg.get("DB_PATH") or "")
+    domains = load_domains(cfg)
+    clients = load_watch_clients(cfg)
+    enabled = sum(1 for c in clients if c.enabled)
+
+    def run(cmd: list[str]) -> str:
+        try:
+            p = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+            return (p.stdout or p.stderr or "").strip()
+        except (OSError, subprocess.TimeoutExpired):
+            return "?"
+
+    svc = run(["systemctl", "is-active", "sni-watch"])
+    wrap = run(["systemctl", "is-active", "sni-xray-wrap.timer"])
+    print(f"sni-watch.service:     {svc or '?'}")
+    print(f"sni-xray-wrap.timer:   {wrap or '?'}")
+    print(f"watchlist:             {enabled}/{len(clients)} فعال")
+    print(f"domain list:           {len(domains)} دامنه")
+    if db.exists():
+        import sqlite3
+
+        conn = sqlite3.connect(str(db), timeout=5)
+        try:
+            hits = conn.execute("SELECT COUNT(*), COALESCE(SUM(count),0) FROM hits").fetchone()
+            paused = conn.execute("SELECT v FROM meta WHERE k='collector_paused'").fetchone()
+        finally:
+            conn.close()
+        print(f"DB hits:               {hits[0]} rows / {hits[1]} events")
+        print(f"collector:             {'paused' if paused and paused[0]=='1' else 'running'}")
+    for lp in cfg.get("ACCESS_LOGS", cfg.get("ACCESS_LOG", "")).split(","):
+        p = Path(lp.strip())
+        if p.exists():
+            print(f"log {p.name}:{' '*(18-len(p.name))}{p.stat().st_size/1024/1024:.1f} MiB")
+    print()
+    print("دامنه‌های اصلی (نمونه):")
+    for name in ("pornhub.com", "xnxx.com", "xvideos.com", "phncdn.com", "xvideos-cdn.com"):
+        ok = name in domains
+        print(f"  {name:<22} {'✓' if ok else '✗'}")
+
+
+def cmd_domains(args: list[str]) -> None:
+    cfg = load_cfg()
+    hosts = args or ["pornhub.com", "www.pornhub.com", "xnxx.com", "xvideos.com", "phncdn.com"]
+    for host, matched, suffix in domain_check(hosts, cfg):
+        if matched:
+            print(f"{host:<36} ✓  (rule: {suffix})")
+        else:
+            print(f"{host:<36} ✗  در لیست نیست")
+
+
+def main() -> None:
+    argv = sys.argv[1:]
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        usage()
+    maybe_remote(argv)
+    cmd = argv[0].lower()
+    if cmd == "stats":
+        cmd_stats(argv[1:])
+        return
+    if cmd == "list":
+        if len(argv) != 1:
+            usage()
+        cmd_list()
+        return
+    if cmd == "status":
+        if len(argv) != 1:
+            usage()
+        cmd_status()
+        return
+    if cmd == "domains":
+        cmd_domains(argv[1:])
+        return
+    usage()
+
+
+if __name__ == "__main__":
+    main()
