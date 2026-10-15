@@ -15,7 +15,15 @@ from pathlib import Path
 from time import gmtime, strftime
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from vpn_path_lib import get_core, load_env, publish, put_selector  # noqa: E402
+from vpn_path_lib import (  # noqa: E402
+    append_history,
+    get_core,
+    load_env,
+    publish,
+    put_selector,
+    read_mode,
+    write_mode,
+)
 from vpn_paths import FAIL_STREAK, FAILBACK_STREAK, PRIORITY  # noqa: E402
 
 IRAN = "root@193.228.90.107"
@@ -97,11 +105,20 @@ def _run() -> None:
     h = fetch_health()
     HEALTH_CACHE.parent.mkdir(parents=True, exist_ok=True)
     HEALTH_CACHE.write_text(json.dumps(h) + "\n")
+    try:
+        append_history(h)
+    except OSError:
+        pass
     if not h.get("inbound_ok"):
         log("SKIP inbound_down")
         return
     paths = h.get("paths") or {}
+    mode = read_mode()
+    manual = mode["mode"] == "manual"
     sel = get_core(env)["config"]["routing"]["balancers"][0].get("selector") or []
+    if manual and sel != [mode["path"]]:
+        do_switch(env, st, ",".join(sel), mode["path"], "restore manual pin")
+        return
     if len(sel) != 1:
         pick = next((t for t in PRIORITY if bool((paths.get(t) or {}).get("ok"))), PRIORITY[0])
         do_switch(env, st, ",".join(sel), pick, "pin single healthy path (was multi-selector)")
@@ -117,6 +134,9 @@ def _run() -> None:
     if healthy(cur):
         fail[cur] = 0
         ok[cur] = int(ok.get(cur) or 0) + 1
+        if manual:
+            save_state(st)
+            return
         for tag in PRIORITY:
             if tag == cur:
                 break
@@ -137,9 +157,17 @@ def _run() -> None:
         save_state(st)
         return
 
+    if manual and not mode["failover"]:
+        if fail[cur] == FAIL_STREAK or fail[cur] % 10 == 0:
+            log(f"ALERT MANUAL_PIN_DOWN current={cur} failover=off")
+        save_state(st)
+        return
+
     for tag in PRIORITY:
         if tag == cur or not healthy(tag):
             continue
+        if manual:
+            write_mode("auto", by="failover", note=f"manual {cur} failed {fail[cur]}x")
         do_switch(
             env,
             st,

@@ -13,7 +13,7 @@ from pathlib import Path
 from time import gmtime, strftime
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from vpn_path_lib import get_core, load_env, publish, put_selector  # noqa: E402
+from vpn_path_lib import get_core, load_env, publish, put_selector, read_mode, write_mode  # noqa: E402
 from vpn_paths import MAP, PRIORITY  # noqa: E402
 
 LOG = Path("/var/log/vpn-path/manual.log")
@@ -34,6 +34,11 @@ def status(env: dict) -> None:
     print("fallback", b.get("fallbackTag"))
     print("strategy", (b.get("strategy") or {}).get("type"))
     print("priority", ",".join(PRIORITY))
+    m = read_mode()
+    if m["mode"] == "manual":
+        print("mode manual", m["path"], "failover", "on" if m["failover"] else "off")
+    else:
+        print("mode auto")
     print("live-xray docker-node stdin after /start")
     print("unused-systemd /root/.pg_nodes/iran/xray.json")
 
@@ -54,10 +59,15 @@ def main() -> None:
         )
         return
     if mode not in MAP:
-        raise SystemExit("usage: vpn-path auto|cf|xhttp|direct|tuic|status|publish|test")
+        raise SystemExit("usage: vpn-path auto|direct|xhttp|gcore|bunny|cf|cforange [--no-failover]|status|publish|test")
     selector = MAP[mode]
+    failover = "--no-failover" not in sys.argv[2:]
+    if mode == "auto":
+        write_mode("auto", by="cli")
+    else:
+        write_mode("manual", selector[0], failover, by="cli")
     put_selector(env, get_core(env), selector)
-    log(f"manual {mode} selector={','.join(selector)}")
+    log(f"manual {mode} selector={','.join(selector)} failover={'on' if failover else 'off'}")
     print("SET", mode, selector)
     publish()
 
